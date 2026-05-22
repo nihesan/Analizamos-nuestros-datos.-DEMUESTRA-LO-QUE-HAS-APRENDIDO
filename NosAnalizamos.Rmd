@@ -57,3 +57,11 @@ cor(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")),use="complete.obs", meth
 
 #Las variables con la mayor correlación son Matemática Discreta(MD) y Álgebra(ALG), con un 0.8005774 con pearson y un 0.8563333 con spearman
 ```
+
+```{r}
+#Boxplots
+datos %>% select(c("ALG", "ANM", "FP", "DCS", "MD")) %>% pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota") %>%
+filter(!is.na(Nota)) %>% ggplot(aes(x = Asignatura, y = Nota, fill = Asignatura)) + geom_boxplot() + geom_jitter() + labs(title = "Boxplots de calificaciones por asignatura",x = "Asignaturas",y = "Notas", fill = "Asignatura") 
+
+datos %>% select(c("Sex", "ALG", "ANM", "FP", "DCS", "MD")) %>% pivot_longer(cols = all_of(c("ALG", "ANM", "FP", "DCS", "MD")), names_to = "Asignatura", values_to = "Nota") %>% filter(!is.na(Nota) & !is.na(Sex)) %>% ggplot(aes(x = Asignatura, y = Nota, fill = Sex)) + geom_boxplot() + geom_point(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 1)) + labs(title = "Hombre Vs Mujer", x = "Asignaturas", y = "Notas numéricas",fill = "Sexo")
+```
