@@ -44,3 +44,16 @@ pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota")%>
     mutate(across(where(is.numeric), ~ round(., 2)))
 tabla_estadisticos
 ```
+
+```{r}
+#Covarianza y Correlacion
+ggpairs(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")))
+
+cov(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")),use="complete.obs")
+    
+cor(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")),use="complete.obs", method="pearson")
+
+cor(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")),use="complete.obs", method="spearman")
+
+#Las variables con la mayor correlación son Matemática Discreta(MD) y Álgebra(ALG), con un 0.8005774 con pearson y un 0.8563333 con spearman
+```
