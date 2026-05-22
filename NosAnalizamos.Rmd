@@ -1,0 +1,21 @@
+---
+title: "NosAnalizamos"
+author: "nihesan"
+date: "2026-05-22"
+output: html_document
+---
+
+```{r}
+#Carga de librerias
+if(!require("pacman"))install.packages("pacman")
+pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2)
+```
+
+```{r}
+datos =read_tsv("data/NosAutoanalizamos2022 - Hoja1.tsv", skip=25)
+
+datos = datos[,-1]
+datos = datos[-nrow(datos),]
+
+datos = datos%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="martsobm")
+```
