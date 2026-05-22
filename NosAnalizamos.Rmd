@@ -23,7 +23,7 @@ datos = datos%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="
 
 ```{r}
 #Adecuación de calificaciones
-datos = datos %>% mutate(across(all_of(c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
+datos = datos %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
     x = str_trim(.) 
     x = if_else(x == "NC", "3", x) 
     x = str_replace_all(x, ",", ".")
@@ -32,5 +32,15 @@ datos = datos %>% mutate(across(all_of(c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
 ```
 
 ```{r}
-
+#Tabla de estadísticos
+tabla_estadisticos = datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")) %>%
+pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota")%>% group_by(Asignatura) %>% summarise(Mínimo = min(Nota, na.rm = T),
+    Percentil25 = quantile(Nota, 0.25, na.rm = T),
+    Mediana = median(Nota, na.rm = T),
+    Media = mean(Nota, na.rm = T),
+    "Desviación Típica" = sd(Nota, na.rm = T),
+    Percentil75 = quantile(Nota, 0.75, na.rm = T),
+    Máximo = max(Nota, na.rm = T)) %>%
+    mutate(across(where(is.numeric), ~ round(., 2)))
+tabla_estadisticos
 ```
