@@ -12,10 +12,25 @@ pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2)
 ```
 
 ```{r}
-datos =read_tsv("data/NosAutoanalizamos2022 - Hoja1.tsv", skip=25)
+#Importación y limpieza del tsv
+datos = read_tsv("data/NosAutoanalizamos2022 - Hoja1.tsv", skip=25)
 
 datos = datos[,-1]
 datos = datos[-nrow(datos),]
 
 datos = datos%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="martsobm")
+```
+
+```{r}
+#Adecuación de calificaciones
+datos = datos %>% mutate(across(all_of(c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
+    x = str_trim(.) 
+    x = if_else(x == "NC", "3", x) 
+    x = str_replace_all(x, ",", ".")
+    as.numeric(x)
+  }))
+```
+
+```{r}
+
 ```
