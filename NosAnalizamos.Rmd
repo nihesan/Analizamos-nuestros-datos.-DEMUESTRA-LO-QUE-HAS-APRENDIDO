@@ -2,12 +2,20 @@
 title: "NosAnalizamos"
 author: "nihesan"
 date: "2026-05-22"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+header-includes:
+  - \usepackage{fvextra}
+  - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
 ---
 
 ```{r message=FALSE, warning=FALSE}
-#Carga de librerias
-if(!require("pacman"))install.packages("pacman")
+# Configuración para que el texto de la consola no se salga
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), tidy = TRUE)
+
+# Carga de librerías
+if(!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2, lubridate)
 ```
 
