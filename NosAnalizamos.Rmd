@@ -37,6 +37,8 @@ datos = datos %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
     x = str_replace_all(x, ",", ".")
     as.numeric(x)
   }))
+notas = datos %>% select(c("ALG", "ANM", "FP", "DCS", "MD"))
+save(notas, file = "Notas.Rdata")
 ```
 
 ```{r message=FALSE, warning=FALSE}
