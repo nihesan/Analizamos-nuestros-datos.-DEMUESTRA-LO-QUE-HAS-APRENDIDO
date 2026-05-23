@@ -5,13 +5,13 @@ date: "2026-05-22"
 output: html_document
 ---
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Carga de librerias
 if(!require("pacman"))install.packages("pacman")
 pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Importación y limpieza del tsv
 datos = read_tsv("data/NosAutoanalizamos2022 - Hoja1.tsv", skip=25)
 
@@ -21,7 +21,7 @@ datos = datos[-nrow(datos),]
 datos = datos%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="martsobm")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Adecuación de calificaciones
 datos = datos %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
     x = str_trim(.) 
@@ -31,7 +31,7 @@ datos = datos %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
   }))
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Tabla de estadísticos
 tabla_estadisticos = datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")) %>%
 pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota")%>% group_by(Asignatura) %>% summarise(Mínimo = min(Nota, na.rm = T),
@@ -45,7 +45,7 @@ pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota")%>
 tabla_estadisticos
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Covarianza y Correlacion
 ggpairs(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")))
 
@@ -58,10 +58,36 @@ cor(datos %>%select(c("ALG", "ANM", "FP", "DCS", "MD")),use="complete.obs", meth
 #Las variables con la mayor correlación son Matemática Discreta(MD) y Álgebra(ALG), con un 0.8005774 con pearson y un 0.8563333 con spearman
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Boxplots
 datos %>% select(c("ALG", "ANM", "FP", "DCS", "MD")) %>% pivot_longer(cols = everything(), names_to = "Asignatura", values_to = "Nota") %>%
 filter(!is.na(Nota)) %>% ggplot(aes(x = Asignatura, y = Nota, fill = Asignatura)) + geom_boxplot() + geom_jitter() + labs(title = "Boxplots de calificaciones por asignatura",x = "Asignaturas",y = "Notas", fill = "Asignatura") 
 
 datos %>% select(c("Sex", "ALG", "ANM", "FP", "DCS", "MD")) %>% pivot_longer(cols = all_of(c("ALG", "ANM", "FP", "DCS", "MD")), names_to = "Asignatura", values_to = "Nota") %>% filter(!is.na(Nota) & !is.na(Sex)) %>% ggplot(aes(x = Asignatura, y = Nota, fill = Sex)) + geom_boxplot() + geom_point(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 1)) + labs(title = "Hombre Vs Mujer", x = "Asignaturas", y = "Notas numéricas",fill = "Sexo")
+```
+
+```{r message=FALSE, warning=FALSE}
+#Diagrama de Líneas
+datos_completos = datos %>% drop_na(c("ALG", "ANM", "FP", "DCS", "MD")) %>% select(Id, all_of(c("ALG", "ANM", "FP", "DCS", "MD"))) %>%  pivot_longer(cols = all_of(c("ALG", "ANM", "FP", "DCS", "MD")), names_to = "Asignatura", values_to = "Calificacion")
+
+ggplot(datos_completos, aes(x = Id, y = Calificacion, color = Asignatura, group = Asignatura)) + geom_line(linewidth = 0.7, alpha = 0.8) + geom_point(size = 2) + labs(title = "Calificaciones por alumno",x = "Usuario",y = "Calificación",color = "Asignatura") + theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r message=FALSE, warning=FALSE}
+#Datos 2026
+datos2 = read_tsv("data/NosAutoanalizamos2026 - NosAutoanalizamos (1).tsv", skip=27)
+
+
+datos2 = datos2%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="martsobm")
+
+#Adecuación de calificaciones
+datos2 = datos2 %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
+    x = str_trim(.) 
+    x = if_else(x == "NC", "3", x) 
+    x = str_replace_all(x, ",", ".")
+    as.numeric(x)
+  }))
+```
+
+```{r message=FALSE, warning=FALSE}
 ```
