@@ -8,7 +8,7 @@ output: html_document
 ```{r message=FALSE, warning=FALSE}
 #Carga de librerias
 if(!require("pacman"))install.packages("pacman")
-pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2)
+pacman::p_load(tidyverse, dplyr, readr, knitr, GGally, ggplot2, lubridate)
 ```
 
 ```{r message=FALSE, warning=FALSE}
@@ -77,17 +77,74 @@ ggplot(datos_completos, aes(x = Id, y = Calificacion, color = Asignatura, group 
 #Datos 2026
 datos2 = read_tsv("data/NosAutoanalizamos2026 - NosAutoanalizamos (1).tsv", skip=27)
 
-
 datos2 = datos2%>%filter(if_any(everything(), ~ !is.na(.)&. != ""))%>%filter(Id!="martsobm")
 
-#Adecuación de calificaciones
+#Adecuación
 datos2 = datos2 %>% mutate(across((c("ALG", "ANM", "FP", "DCS", "MD")), ~ {
     x = str_trim(.) 
     x = if_else(x == "NC", "3", x) 
     x = str_replace_all(x, ",", ".")
     as.numeric(x)
   }))
+
+datos2 = datos2 %>% mutate(across((Wr.Hnd), ~ {
+    x = str_trim(.) 
+    x = str_replace_all(x, ",", ".")
+    as.numeric(x)
+  }))
+
+datos2 = datos2 %>% mutate(Smoke = str_to_title(Smoke)) %>% mutate(NW.Hnd = str_to_title(NW.Hnd))
 ```
 
 ```{r message=FALSE, warning=FALSE}
+#Preguntas
+#¿Qué edad, expresada en años (con decimales) tiene el alumno más joven a fecha 01/02/2026.
+as.numeric(round(min(as.Date("2026-02-01") - as.Date(datos2$"FechaNac(DD-MM-YYY)", format = "%d-%m-%Y"), na.rm = T) / 365,2))
+
+#Cuántos alumnos simultanean trabajo y estudios.
+datos2 %>% filter(Hwork >0) %>% nrow()
+
+#Hay más hombres o más mujeres fumadoras.
+table(datos2$Sex, datos2$Smoke)
+#No hay mujeres fumadoras, por lo que los hombres fuman mas
+
+#Cuál es el valor medio y la varianza de la variable Wr.Hnd según el sexo.
+datos2 %>% filter(!is.na(Wr.Hnd) & !is.na(Sex)) %>% group_by(Sex) %>% summarise(Media_Palmo = mean(Wr.Hnd), Varianza_Palmo = var(Wr.Hnd))
+
+#Determina si existe relación entre el sexo y la mano con la que se escribe  (NW.Hnd)
+table(datos2$Sex, datos2$NW.Hnd)
+#Realmente no hay una relacion que podamos observar.
+
+#Existe una relación lineal entre la altura (Height) y la distancia del extremo del meñique al extremo del pulgar de la mano con la que escribimos (Wr.Hnd)
+cor(datos2$Height, datos2$Wr.Hnd,use = "complete.obs",method = "pearson")
+#Existe cierta relacion, teniendo un indice moderado de correlacion. No es exagerado, pero podemos decir que si que hay.
+
+#El identificador de Hampel detecta algún outlier en la variable altura.
+# MADM median absolute deviation from the median
+madm = function(x) {
+  1.4826 * median(abs(x - median(x, na.rm=T)), na.rm=T)
+}
+# Identificador Hampel
+reglahampel <- function(x) {  
+  mediana = median(x, na.rm =T)
+  MADM = madm(x)
+  return(abs(x - mediana) > 3*MADM)
+}
+
+datos2_hampel = datos2 %>% mutate(across(Height, reglahampel)) 
+datos2_hampel %>% select(Height) %>% colSums(na.rm=T)
+#Hampel no detecta ningún outlier.
+
+#Considera la asignatura FP. Si queremos realizar una imputación generalizada usando la media, ¿qué valor deberíamos utilizar ?
+datos2 = datos2 %>% mutate(FP = ifelse(is.na(FP), mean(FP, na.rm=T),FP))
+#Debido a la gran falta de notas de FP, es muy complicado hacer una copmutación que se aproxime a la realidad, por lo que simplemente imputaremos la media de las notas que tenemos disponibles.
+
+#Define una nueva variable (PulseCat) a partir del ritmo cardíaco (Pulse), con dos valores PulseH, si Pulse>=65 y PulseL si Pulse<65. ¿Qué valores utilizarías para imputar los valores faltantes de las notas de FP, dependiendo del valor de PulseCat (imputación por casos similares)
+datos2 = datos2 %>% mutate(PulseCat = if_else(Pulse >= 65, "PulseH", "PulseL"))
+
+medias_condicionadas = datos2 %>% filter(!is.na(FP) & !is.na(PulseCat)) %>% group_by(PulseCat) %>% summarise(Media_FP = mean(FP))
+
+#¿Qué podemos decir, como científicos de datos, ante esta frase referida a nuestros datos ? "El ritmo cardíaco está ligado con la cantidad de sangre que llega al cerebro, por tanto existirá una relación lineal directa esta esta variable y las calificaciones obtenidas en ALG"
+cor(datos2$Pulse, datos2$ALG, use = "complete.obs",method = "pearson")
+#Podemos determinar de que esta frase, no solo suena abusrda, sino que lo es. Por sentido común se puede deducir que obviamente es incorrecto, pero tambien podemos mirar su correlación y efectivamente es minuscula.
 ```
